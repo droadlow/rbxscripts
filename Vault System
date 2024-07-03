@@ -1,7 +1,5 @@
 local uis = game:GetService('UserInputService')
-local tweenservice = game:GetService('TweenService')
 local debris = game:GetService('Debris')
-local runservice = game:GetService('RunService')
 
 local player = game.Players.LocalPlayer
 local character = player.Character
