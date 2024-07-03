@@ -1,0 +1,67 @@
+local uis = game:GetService('UserInputService')
+local tweenservice = game:GetService('TweenService')
+local debris = game:GetService('Debris')
+local runservice = game:GetService('RunService')
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+local humanoid = character:WaitForChild('Humanoid')
+local hrp = character:WaitForChild('HumanoidRootPart')
+local head = character:WaitForChild('Head')
+
+
+local vaultAnim = script:WaitForChild('VaultAnimation')
+local vaultTrack = humanoid:LoadAnimation(vaultAnim)
+
+local climbPartsFolder = workspace:WaitForChild('Climbable')
+
+local KEYBIND_VAULT = Enum.KeyCode.Space
+local vaultPartSize = 4
+local vaultDistance = 2
+local climbTime = 1
+local grabbed = false
+
+local raycastParams = RaycastParams.new()
+raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+raycastParams.FilterDescendantsInstances = {character}
+
+
+uis.InputBegan:Connect(function(input, chatting)
+	
+	if not chatting then
+		
+		if input.KeyCode == KEYBIND_VAULT then
+			
+			local ray = workspace:Raycast(hrp.Position, hrp.CFrame.LookVector * vaultDistance, raycastParams)
+			
+			if ray then
+				
+				if ray.Instance then
+					
+					local hitObj = ray.Instance
+					
+					if hitObj.Size.Y == vaultPartSize then
+						
+						local bv = Instance.new("BodyVelocity")
+						bv.Parent = hrp
+						
+						bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+
+						bv.Velocity = hrp.CFrame.lookVector * 10 + Vector3.new(0, 20, 0)
+						
+						
+						debris:AddItem(bv, .1)
+						
+						vaultTrack:Play()
+						
+					end
+					
+				end
+				
+			end
+			
+		end
+		
+	end
+	
+end)
