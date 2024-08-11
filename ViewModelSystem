@@ -1,1 +1,102 @@
+local runService = game:GetService('RunService')
+local uis = game:GetService('UserInputService')
 
+local player = game.Players.LocalPlayer
+local character = player.Character
+local humanoid = character:FindFirstChild('Humanoid')
+
+local camera = workspace.CurrentCamera
+local swayCF = CFrame.new()
+
+
+local lastTool
+local backpackTools = {}
+local equipped = false
+local toolModel
+
+
+local function checkBackpack()
+	for _, item in pairs(player.Backpack:GetChildren()) do
+		table.insert(backpackTools, item)
+	end
+end
+
+local function unInVisibleTool(invisible)
+	if equipped then
+		local foundedTool
+		for _, obj in pairs(character:GetChildren()) do
+			if obj:IsA('Tool') then
+				foundedTool = obj
+			end
+		end
+		if invisible then
+			for _, obj in pairs(foundedTool:GetChildren()) do
+				if obj:IsA('BasePart') then
+					obj.Transparency = 1
+				end
+			end
+		end
+	else
+		for _, obj in pairs(lastTool:GetChildren()) do
+			if obj:IsA('BasePart') then
+				obj.Transparency = 0
+			end
+		end
+	end
+end
+
+local function deleteViewModel(tool)
+	camera:FindFirstChild('ViewModel'):Destroy()
+end
+
+local function createViewModel(tool)
+	local newViewModel = Instance.new('Model', camera)
+	newViewModel.Name = 'ViewModel'
+	for _, obj in pairs(tool:GetChildren()) do
+		if obj:IsA('BasePart') then
+			local clonedPart = obj:Clone()
+			unInVisibleTool(true)
+			clonedPart.Parent = newViewModel
+		end
+	end
+	for _, obj in pairs(newViewModel:GetChildren()) do
+		if obj.Name == 'Handle' then
+			newViewModel.PrimaryPart = obj
+		end
+	end
+	
+	toolModel = newViewModel
+end
+
+
+character.ChildAdded:Connect(function(child)
+	if child:IsA('Tool') then
+		equipped = true
+		createViewModel(child)
+		table.remove(backpackTools, backpackTools[child])
+	end
+end)
+
+character.ChildRemoved:Connect(function(child)
+	if child:IsA('Tool') then
+		equipped = false
+		toolModel = nil
+		lastTool = child
+		table.insert(backpackTools, child)
+		deleteViewModel()
+		unInVisibleTool(false)
+	end
+end)
+
+
+
+runService.RenderStepped:Connect(function(delta)
+	if equipped then
+		local mouseDelta = uis:GetMouseDelta() / 50
+		local swayX = math.clamp(mouseDelta.X, -0.2, 0.2)
+		local swayY = math.clamp(mouseDelta.Y, -0.2, 0.2)
+
+		swayCF = swayCF:Lerp(CFrame.new(swayX, swayY, 0), .3)
+		toolModel:SetPrimaryPartCFrame(camera.CFrame * CFrame.new(1.5, -1, -2.3) * CFrame.Angles(1, math.rad(80), math.rad(40)) * swayCF)
+	end
+end)
